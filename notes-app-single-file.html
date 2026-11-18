@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Notes</title>
+
+  <!-- CSS: how the app looks -->
+  <style>
+    body { margin: 0; background: #f4f6fb; font-family: Arial, sans-serif; color: #222; }
+    .app { max-width: 800px; margin: 0 auto; padding: 24px 16px; }
+    h1 { text-align: center; color: #3b5bdb; }
+
+    .form { background: white; padding: 16px; border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-bottom: 24px; }
+    .form input, .form textarea { display: block; width: 100%; box-sizing: border-box;
+            padding: 10px; margin-bottom: 10px; border: 1px solid #ccc;
+            border-radius: 6px; font-size: 16px; font-family: inherit; }
+    .form textarea { height: 90px; resize: vertical; }
+
+    .btn { padding: 8px 14px; margin-right: 8px; border: 1px solid #ccc;
+           border-radius: 6px; background: white; font-size: 14px; cursor: pointer; }
+    .btn:hover { background: #eee; }
+    .btn.primary { background: #3b5bdb; border-color: #3b5bdb; color: white; }
+    .btn.primary:hover { background: #2f49b5; }
+    .btn.danger { color: #c92a2a; }
+
+    .notes { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .note { background: #fff9c4; padding: 16px; border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .note h3 { margin-top: 0; }
+    .note p { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .empty { text-align: center; color: #777; }
+  </style>
+</head>
+
+<body>
+  <!-- React puts the app inside this div -->
+  <div id="root"></div>
+
+  <!-- Load React and Babel (Babel lets us write JSX). Needs internet. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+  <!-- React code: what the app does -->
+  <script type="text/babel">
+    const { useState } = React;
+
+    function App() {
+      // 1. STATE: data React remembers
+      const [notes, setNotes] = useState([
+        { id: 1, title: "Welcome", text: "Add, edit or delete notes here." },
+      ]);
+      const [title, setTitle] = useState("");
+      const [text, setText] = useState("");
+      const [editingId, setEditingId] = useState(null); // null = adding, not editing
+
+      // 2. CREATE or UPDATE
+      function handleSave() {
+        if (title.trim() === "" && text.trim() === "") return;
+
+        if (editingId === null) {
+          const newNote = { id: Date.now(), title: title, text: text };
+          setNotes([newNote, ...notes]);
+        } else {
+          const updatedNotes = notes.map(function (note) {
+            if (note.id === editingId) {
+              return { ...note, title: title, text: text };
+            }
+            return note;
+          });
+          setNotes(updatedNotes);
+        }
+        clearForm();
+      }
+
+      // 3. Put an existing note into the form so it can be changed
+      function handleEdit(note) {
+        setEditingId(note.id);
+        setTitle(note.title);
+        setText(note.text);
+      }
+
+      // 4. DELETE
+      function handleDelete(id) {
+        const remainingNotes = notes.filter(function (note) {
+          return note.id !== id;
+        });
+        setNotes(remainingNotes);
+        if (editingId === id) clearForm();
+      }
+
+      function clearForm() {
+        setTitle("");
+        setText("");
+        setEditingId(null);
+      }
+
+      // 5. WHAT THE USER SEES
+      return (
+        <div className="app">
+          <h1>My Notes</h1>
+
+          <div className="form">
+            <input
+              placeholder="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <textarea
+              placeholder="Write your note..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+            <button className="btn primary" onClick={handleSave}>
+              {editingId === null ? "Add Note" : "Update Note"}
+            </button>
+            {editingId !== null && (
+              <button className="btn" onClick={clearForm}>Cancel</button>
+            )}
+          </div>
+
+          {notes.length === 0 && <p className="empty">No notes yet.</p>}
+
+          <div className="notes">
+            {notes.map((note) => (
+              <div className="note" key={note.id}>
+                <h3>{note.title}</h3>
+                <p>{note.text}</p>
+                <button className="btn" onClick={() => handleEdit(note)}>Edit</button>
+                <button className="btn danger" onClick={() => handleDelete(note.id)}>Delete</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
